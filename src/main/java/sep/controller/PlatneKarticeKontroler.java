@@ -1,12 +1,11 @@
 package sep.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -19,6 +18,8 @@ import sep.dto.URLDTO;
 @RestController
 @RequestMapping(value = "/platneKartice")
 public class PlatneKarticeKontroler {
+	
+	private static final Logger logger = LoggerFactory.getLogger(PlatneKarticeKontroler.class);
 
 	@CrossOrigin
 	@RequestMapping(value = "/usmeriNaBanku", method = RequestMethod.POST)
@@ -26,35 +27,41 @@ public class PlatneKarticeKontroler {
 		RestTemplate client = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		Boolean autentifikovan = false;
+		
 		try {
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			HttpEntity<CardDTO> entity = new HttpEntity<>(card, headers);
-			autentifikovan = client.postForObject("http://localhost:1235/payment/autentifikacijaUsera", entity, Boolean.class);
+			autentifikovan = client.postForObject("https://localhost:1235/payment/autentifikacijaUsera", entity, Boolean.class);
 			
 		} catch (Exception e) {
-			System.out.println("Ne moze da posalje");
+			System.out.println("\n\t\tNe može da pošalje zahtev banci.\n");
 			
 		}
+		
 		if(autentifikovan==true) {
 			RestTemplate client1 = new RestTemplate();
 			HttpHeaders headers1 = new HttpHeaders();
+			
 			try {
 				headers.setContentType(MediaType.APPLICATION_JSON);
 				HttpEntity<CardDTO> entity = new HttpEntity<>(card, headers);
 				URLDTO url = new URLDTO();
-				url = client.postForObject("http://localhost:1235/payment/izvrsiPlacanje", entity, URLDTO.class);
+				url = client.postForObject("https://localhost:1235/payment/izvrsiPlacanje", entity, URLDTO.class);
+				
+				logger.info("\n\t\tPreusmeravanje na URL (uspešno):\n" + url + "\n");
 				return url;
 			} catch (Exception e) {
 				URLDTO url = new URLDTO();
-				url.setUrl("http://localhost:1234/greska.html");
+				url.setUrl("https://localhost:9081/greska.html");
+				logger.info("\n\t\tGreška prilikom pokušaja preusmeravanja na banku.\n");
 				return url;
 			}
-		}else {
+		}else{
 			URLDTO url = new URLDTO();
-			url.setUrl("http://localhost:1234/greska.html");
+			url.setUrl("https://localhost:9081/greska.html");
+			logger.info("\n\t\tGreška prilikom pokušaja preusmeravanja na banku.\n");
 			return url;
 		}
-
 	}
 
 }
